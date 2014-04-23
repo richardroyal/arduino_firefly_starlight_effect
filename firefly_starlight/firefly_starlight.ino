@@ -11,22 +11,22 @@
 TLC_CHANNEL_TYPE channel;
 
 // Each pulse will reach a brightness between these two.
-const MAX_BRIGHT = 4059;
-const MIN_BRIGHT = (1/2) * MAX_BRIGHT;
+const int MAX_BRIGHT = 4059;
+const int MIN_BRIGHT = ceil( (1/2) * MAX_BRIGHT );
 
 // Each pulse will climb to its max brightness in increments between these two (per loop cycle).
-const MIN_STEP_SPEED = (1/1000) * MAX_BRIGHT;
-const MAX_STEP_SPEED = (1/100)  * MAX_BRIGHT;
+const int MIN_STEP_SPEED = (1/1000) * MAX_BRIGHT;
+const int MAX_STEP_SPEED = ceil( (1/100)  * MAX_BRIGHT );
 
 // Delay for consecutive pulses on one pin falls between these two (loop cycles).
-const MIN_DELAY = 1000;
-const MAX_DELAY = 10000;
+const int MIN_DELAY = 1000;
+const int MAX_DELAY = 10000;
 
 // Channels per Tlc5940. Cannot skip addresses, for example:
 // 16 channels means LEDs 1-16, 4 channels means LEDs 1-4. 
-const TOTAL_CHANNELS = 16
+const int TOTAL_CHANNELS = 16;
 
-int states = [TOTAL_CHANNELS];
+int states[TOTAL_CHANNELS][6];
 
 
 // Setup initial conditions for LED channels.
@@ -44,18 +44,19 @@ void setup_channel_states(){
     /* 
       State Array for each channel contains:
       
-           channel/LED number,
-           current brightness of channel,
-           max brightness for current pulse,
-           speed of current pulse,
-           direction of current pulse,
-           delay before next pulse (changes after each pulse).
+           [0]: channel/LED number,
+           [1]: current brightness of channel,
+           [2]: max brightness for current pulse,
+           [3]: speed step of current pulse,
+           [4]: direction of current pulse,
+           [5]: delay before next pulse (changes after each pulse).
     */
-    int pulse_to = random( MIN_BRIGHT, MAX_BRIGHT );
-    int step_interval = random( MIN_STEP_SPEED, MAN_STEP_SPEED );
-    int channel_delay = random( MIN_DELAY, MAX_DELAY ); 
-
-    states[i] = { i + 1, 0, pulse_to, step_interval, 1, channel_delay };
+    states[i][0] = i + 1;
+    states[i][1] = 0;
+    states[i][2] = random( MIN_BRIGHT, MAX_BRIGHT );    
+    states[i][3] = random( MIN_STEP_SPEED, MAX_STEP_SPEED );;
+    states[i][4] = 1;
+    states[i][5] = random( MIN_DELAY, MAX_DELAY );    
   } 
   
 }
@@ -64,10 +65,24 @@ void setup_channel_states(){
 /**
  * Increment channel state, then send channels values to Tlc lib
  */
-void update_channel( chan ){
+void update_channel( int *channel_state ){
   
-  Tlc.set( ch[0], 1023);
+  
+  // Change direction of pulse when max brightness is hit.
+  if( channel_state[2] - channel_state[3] < channel_state[3] ){
+    
+    channel_step[4] = -1;
+    
+  } else if( channel_state[4] == -1 && ( channel_state[1] - channel_state[3] < 0 ) ) {
+  
+    reset_initialize_channel( channel_state );
+  }
 
+  // Update brightness
+  channel_state[1] += channel[4] * channel_state[3];
+  
+  
+  Tlc.set( channel_state[0], channel_state[1] );
 }
 
 
@@ -75,7 +90,7 @@ void update_channel( chan ){
 void loop(){
    
   for( int i = 0; i < TOTAL_CHANNELS; i++ ){  
-    update_channel( state[i] );
+    update_channel( states[i] );
   }
  
   delay(1000);
