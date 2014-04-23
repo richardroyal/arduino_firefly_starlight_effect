@@ -1,5 +1,9 @@
 /*
-    Fades groupings of LEDs at different rates and max brightnesses.  
+    Fades LEDs at different rates and max brightnesses relying heavily
+    on random number generator to random pulses 
+    
+    create a pulse for a channel and then
+    create a new pulse with differen
 */
 
 #include "Tlc5940.h"
@@ -18,15 +22,14 @@ const MAX_STEP_SPEED = (1/100)  * MAX_BRIGHT;
 const MIN_DELAY = 1000;
 const MAX_DELAY = 10000;
 
-
+// Channels per Tlc5940. Cannot skip addresses, for example:
+// 16 channels means LEDs 1-16, 4 channels means LEDs 1-4. 
 const TOTAL_CHANNELS = 16
-
 
 int states = [TOTAL_CHANNELS];
 
 
-
-// Init Arduino and LED Driver lib.
+// Setup initial conditions for LED channels.
 void setup(){
   
   setup_channel_states();
@@ -34,64 +37,46 @@ void setup(){
   
 }
 
-
 void setup_channel_states(){
 
   for( int i = 0; i < TOTAL_CHANNELS; i++ ){
   
-    // State array contains:
-    //    channel/LED number
-    //    current brightness of channel
-    //    max brightness for current pulse
-    //    speed of current pulse
-    //    direction of current pulse
-    //    delay between pulses, changes after each pulse
-    //
-    
+    /* 
+      State Array for each channel contains:
+      
+           channel/LED number,
+           current brightness of channel,
+           max brightness for current pulse,
+           speed of current pulse,
+           direction of current pulse,
+           delay before next pulse (changes after each pulse).
+    */
     int pulse_to = random( MIN_BRIGHT, MAX_BRIGHT );
-    int step_speed = random( MIN_STEP_SPEED, MAN_STEP_SPEED );
+    int step_interval = random( MIN_STEP_SPEED, MAN_STEP_SPEED );
     int channel_delay = random( MIN_DELAY, MAX_DELAY ); 
 
-    states[i] = { i + 1, 0, pulse_to, , 1, channel_delay };
+    states[i] = { i + 1, 0, pulse_to, step_interval, 1, channel_delay };
   } 
   
 }
 
 
-void update_channel_state(){
+/**
+ * Increment channel state, then send channels values to Tlc lib
+ */
+void update_channel( chan ){
+  
+  Tlc.set( ch[0], 1023);
 
 }
 
 
-// Main loop for Arduino
-/*
-
- TAKEN FROM EXAMPLE
+// Main loop for Arduino, updates each channel brightness after incrementing state.
+void loop(){
+   
+  for( int i = 0; i < TOTAL_CHANNELS; i++ ){  
+    update_channel( state[i] );
+  }
  
-void loop()
-{
-  for (int i = 0; i < 16; i++)
-  {
-    Tlc.set(i, 1023);
-  }
-  Tlc.update();
-  delay(1000);
-  for (int i = 0; i < 16; i++)
-  {
-    Tlc.set(i, 2046);
-  }
-  Tlc.update();
-  delay(1000);
-  for (int i = 0; i < 16; i++)
-  {
-    Tlc.set(i, 3069);
-  }
-  Tlc.update();
-  delay(1000);
-  for (int i = 0; i < 16; i++)
-  {
-    Tlc.set(i, 4095);
-  }
-  Tlc.update();
   delay(1000);
 }
