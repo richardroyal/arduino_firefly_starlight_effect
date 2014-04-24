@@ -9,7 +9,8 @@ TLC_CHANNEL_TYPE channel;
 
 // Max brightness range for a pulse. Min value should be 
 // smallest value that will show light given hardware constraints. 
-const int MAX_BRIGHT = 4059;
+//const int MAX_BRIGHT = 4059;
+const int MAX_BRIGHT = 255;
 const int MIN_BRIGHT = ceil( (1/2) * MAX_BRIGHT );
 
 // Range for pulse length.
@@ -18,11 +19,11 @@ const int MAX_PULSE_LENGTH = 5;
 
 // Delay range for consecutive pulses on same channel.
 const int MIN_DELAY = 1;
-const int MAX_DELAY = 1000 * MIN_DELAY;
+const int MAX_DELAY = 1000 * MIN_DELAY ; //200 * MIN_DELAY;
 
 // Channels per Tlc5940. Cannot skip addresses, for example:
 // 16 channels means LEDs 1-16, 4 channels means LEDs 1-4. 
-const int TOTAL_CHANNELS = 16;
+const int TOTAL_CHANNELS = 1;
 
 int states[TOTAL_CHANNELS][6];
 
@@ -31,7 +32,7 @@ int states[TOTAL_CHANNELS][6];
 void setup(){
   
   setup_channel_states();
-  Tlc.init(0);  
+  //Tlc.init(0);  
 }
 
 void setup_channel_states(){
@@ -77,7 +78,8 @@ void update_channel( int *channel_state ){
     }
 
 
-    Tlc.set( channel_state[0], channel_state[1] );
+    //Tlc.set( channel_state[0], channel_state[1] );
+    analogWrite( 13, channel_state[1] );  
     
     // Decrement pulse length timer
     channel_state[2] -= 1;
